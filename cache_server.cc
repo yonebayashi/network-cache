@@ -7,21 +7,29 @@
 #define LOCALHOST_ADDRESS "127.0.0.1"
 #define PORT 8080
 
+using boost::asio::ip::tcp;
 // Adapted from https://gist.github.com/spaghetti-/ca0c96237e7adef288d8cdc3a5ba5074
 
 
 class Session : public std::enable_shared_from_this<Session>
 {
 private:
-  crow::tcp::socket socket_;
+  tcp::socket socket_;
   enum { max_length = 1024 };
   char data_[max_length];   // create a buffer of size max_length for data transfer
 
 public:
   Session(boost::asio::io_service& ios)
-    : socket_(ios) {}
+    : socket_(ios)
+  {
+    std::cout << "Starting TCP connection\n";
+  }
+  ~Session()
+  {
+    std::cout << "Destroying TCP connection\n";
+  }
 
-  crow::tcp::socket& get_socket()
+  tcp::socket& get_socket()
   {
     return socket_;
   }
@@ -71,20 +79,23 @@ public:
 
 class Server {
 private:
-  boost::asio::io_service& ios_;
-  boost::asio::ip::tcp::acceptor acceptor_;
+  tcp::acceptor acceptor_;
+
+  void start_accept() {
+    std::shared_ptr<Session> session = std::make_shared<Session>(acceptor_.get_io_service());
+
+    // asynchronous accept operation and wait for a new connection.
+    acceptor_.async_accept(session->get_socket(),
+                          boost::bind(&Server::handle_accept, this, session,
+                          boost::asio::placeholders::error));
+  }
 
 public:
   //constructor for accepting connection from client
   Server(boost::asio::io_service& ios,
-         short port) : ios_(ios), acceptor_(ios, crow::tcp::endpoint(crow::tcp::v4(), port))
+         short port) : acceptor_(ios, tcp::endpoint(tcp::v4(), port))
   {
-    std::shared_ptr<Session> session = std::make_shared<Session>(ios_);
-    // asynchronous accept operation and wait for a new connection.
-    acceptor_.async_accept(session->get_socket(),
-                          boost::bind(&Server::handle_accept, this,
-                          session,
-                          boost::asio::placeholders::error));
+    start_accept();
   }
 
   void handle_accept(std::shared_ptr<Session> session,
@@ -92,6 +103,7 @@ public:
   {
     if (!err) {
       session->start();
+      start_accept();
     }
     else {
       std::cerr << "err: " + err.message() << std::endl;
