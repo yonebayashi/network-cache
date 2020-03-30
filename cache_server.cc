@@ -13,8 +13,20 @@ int main(int argc, char *argv[])
 
   SimpleApp app;
   CROW_ROUTE(app, "/")([]{
-    return "Hello world";
+    return "Hello world\n";
   });
+
+  // GET /key
+  CROW_ROUTE(app, "/<int>")
+    .methods("GET"_method)
+  ([](int key){
+    std::ostringstream os;
+    os << "Getting key: " << key << "\n";
+    return crow::response(os.str());
+  });
+
+  // PUT /k/v
+
 
   auto _ = async(std::launch::async, [&]{app.bindaddr(LOCALHOST_ADDRESS).port(PORT).run();});
 
