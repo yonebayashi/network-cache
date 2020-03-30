@@ -1,4 +1,7 @@
 #include "crow_all.h"
+#include "cache_lib.cc"
+#include "evictor.hh"
+#include "cache.hh"
 #include <iostream>
 
 using namespace crow;
@@ -16,13 +19,27 @@ int main(int argc, char *argv[])
     return "Hello world\n";
   });
 
+
+  Cache cache(8, 0.75, nullptr);
+  Cache::size_type size;
+
+  const Cache::val_type val1 = "1";
+  const Cache::val_type val2 = "2";
+
+  cache.set("k1", val1, strlen(val1)+1);
+  cache.set("k2", val2, strlen(val2)+1);
+
   // GET /key
-  CROW_ROUTE(app, "/<int>")
+  // test with "curl -X GET http://localhost:8080/{key} --output -"
+  CROW_ROUTE(app, "/<string>")
     .methods("GET"_method)
-  ([](int key){
-    std::ostringstream os;
-    os << "Getting key: " << key << "\n";
-    return crow::response(os.str());
+  ([&cache, &size](key_type key){
+    crow::json::wvalue x;
+    auto value = cache.get(key, size);
+    if (!value)
+      return crow::response(404, "Key not found");
+    x[key] = value;
+    return crow::response(x);
   });
 
   // PUT /k/v
