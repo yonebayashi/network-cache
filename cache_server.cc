@@ -3,12 +3,24 @@
 #include "evictor.hh"
 #include "cache.hh"
 #include <iostream>
+#include <string>
 
 using namespace crow;
 
 #define LOCALHOST_ADDRESS "127.0.0.1"
 #define PORT 8080
 
+
+void set_header(const crow::request& req, crow::response& res, const Cache& cache) {
+  CROW_LOG_INFO << "Server received a HEAD request";
+
+  res.add_header("Space-Used", std::to_string(cache.space_used()));
+  res.set_header("Accept", "text/html");
+  res.set_header("Connection", "Keep-Alive");
+  res.set_header("Content-Type", "application/json");
+
+  res.end();
+}
 
 int main(int argc, char *argv[])
 {
@@ -29,17 +41,29 @@ int main(int argc, char *argv[])
   cache.set("k1", val1, strlen(val1)+1);
   cache.set("k2", val2, strlen(val2)+1);
 
+
   // GET /key
   // test with "curl -X GET http://localhost:8080/{key} --output -"
   CROW_ROUTE(app, "/<string>")
-    .methods("GET"_method)
-  ([&cache, &size](key_type key){
-    crow::json::wvalue x;
+    .methods("HEAD"_method ,"GET"_method)
+  ([&cache, &size](const crow::request& req, crow::response& res, key_type key)
+  {
+    if (req.method == "HEAD"_method) {
+      set_header(req, res, cache);
+    }
+
     auto value = cache.get(key, size);
-    if (!value)
-      return crow::response(404, "Key not found");
-    x[key] = value;
-    return crow::response(x);
+
+    if (!value) {
+      res.code = 404;
+      res.write("Key not found");
+      res.end();
+    } else {
+      crow::json::wvalue x;
+      x[key] = value;
+      res.write(crow::json::dump(x));
+      res.end();
+    }
   });
 
   // PUT /k/v
