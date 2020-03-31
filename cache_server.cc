@@ -15,8 +15,7 @@ void set_header(const crow::request& req, crow::response& res, const Cache& cach
   CROW_LOG_INFO << "Server received a HEAD request";
 
   res.add_header("Space-Used", std::to_string(cache.space_used()));
-  res.set_header("Accept", "text/html");
-  res.set_header("Connection", "Keep-Alive");
+  res.set_header("Accept", req.get_header_value("accept"));
   res.set_header("Content-Type", "application/json");
 
   res.end();
