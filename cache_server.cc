@@ -43,6 +43,18 @@ int main(int argc, char *argv[])
   cache.set("k2", val2, strlen(val2)+1);
 
 
+  CROW_ROUTE(app, "/reset")
+    .methods("HEAD"_method, "POST"_method)
+  ([&cache, &size](const crow::request& req, crow::response& res)
+  {
+    if (req.method == "HEAD"_method) {
+      set_header(req, res, cache);
+    }
+    cache.reset();
+    res.end();
+  });
+
+
   // GET /key
   // test with "curl -X GET http://localhost:8080/{key} --output -"
   CROW_ROUTE(app, "/<string>")
@@ -73,8 +85,6 @@ int main(int argc, char *argv[])
 
 
   // PUT /k/v
-
-
   CROW_ROUTE(app, "/<string>/<string>")
     .methods("HEAD"_method, "PUT"_method)
   ([&cache, &size](const crow::request& req, crow::response& res, key_type key, std::string value)
@@ -89,16 +99,6 @@ int main(int argc, char *argv[])
 
     res.end();
 
-  });
-
-  CROW_ROUTE(app, "/reset")
-    .methods("HEAD"_method, "POST"_method)
-  ([&cache, &size](const crow::request& req, crow::response& res)
-  {
-    if (req.method == "HEAD"_method) {
-      set_header(req, res, cache);
-    }
-    cache.reset();
   });
 
 
