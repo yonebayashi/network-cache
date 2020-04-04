@@ -4,6 +4,8 @@
 #include "cache.hh"
 #include <iostream>
 #include <string>
+#include <cstring>
+#include <stdlib.h>
 
 using namespace crow;
 
@@ -75,17 +77,17 @@ int main(int argc, char *argv[])
 
   CROW_ROUTE(app, "/<string>/<string>")
     .methods("HEAD"_method, "PUT"_method)
-  ([&cache, &size](const crow::request& req, crow::response& res, key_type key, val_type val)
+  ([&cache, &size](const crow::request& req, crow::response& res, key_type key, std::string value)
   {
     if (req.method == "HEAD"_method) {
       set_header(req, res, cache);
     }
 
-    size_type size = strlen(val) +1;
-    cache.set(key, value, size);
+    Cache::val_type pval = value.c_str();
+    size = value.size()+1;
+    cache.set(key, pval, size);
 
     res.end();
-
 
   });
 
