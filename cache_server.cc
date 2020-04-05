@@ -76,24 +76,14 @@ int main(int argc, char *argv[])
   cache.set("k2", val2, strlen(val2)+1);
 
 
-  CROW_ROUTE(app, "/reset")
-    .methods("HEAD"_method, "POST"_method)
-  ([&cache, &size](const crow::request& req, crow::response& res)
-  {
-    if (req.method == "HEAD"_method) {
-      set_header(req, res, cache);
-    }
-    cache.reset();
-    res.end();
-  });
-
-
-  // GET /key
-  // test with "curl -X GET http://localhost:8080/{key} --output -"
   CROW_ROUTE(app, "/<string>")
-    .methods("HEAD"_method ,"GET"_method, "DELETE"_method)
+    .methods("HEAD"_method ,"GET"_method, "DELETE"_method, "POST"_method)
   ([&cache, &size](const crow::request& req, crow::response& res, key_type key)
   {
+    if ((key == "reset") && (req.method == "POST"_method)) {
+      cache.reset();
+      res.end();
+    }
     if (req.method == "HEAD"_method) {
       set_header(req, res, cache);
     } else if (req.method =="GET"_method) {
