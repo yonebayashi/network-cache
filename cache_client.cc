@@ -145,6 +145,7 @@ class Cache::Impl {
       auto res = stream_.request(http::verb::get, target);
 
       if (res.result() == http::status::not_found) {
+        val_size = 0;
         return nullptr;
       }
 
