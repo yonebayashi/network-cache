@@ -43,7 +43,7 @@ public:
 
   void connect(const std::string& host, const std::string& port);
   void connect() { connect(host, port); };
-  auto request (const std::string& target);
+  auto request (const http::verb& method, const std::string& target);
 
   bool is_open() { return socket.is_open(); };
 
@@ -80,11 +80,11 @@ void httpstream::close()
   // If we get here then the connection is closed gracefully
 }
 
-auto httpstream::request(const std::string& target)
+auto httpstream::request(const http::verb& method, const std::string& target)
 {
-  // Set up an HTTP GET request message
+  // Set up an HTTP request message
   int version = 11;
-  http::request<http::empty_body> req{http::verb::get, target, version};
+  http::request<http::empty_body> req{method, target, version};
   req.set(http::field::host, host);
   req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   //req.keep_alive(true);
@@ -126,6 +126,13 @@ class Cache::Impl {
 
     void set(key_type key, val_type val, size_type size)
     {
+      httpstream stream_;
+      stream_.connect(host_, port_);
+
+      std::string target = "/" + key + "/" + val;
+      auto res = stream_.request(http::verb::put, target);
+
+      stream_.close();
       return;
     }
 
@@ -133,7 +140,9 @@ class Cache::Impl {
     val_type get(key_type key, size_type& val_size) const {
       httpstream stream_;
       stream_.connect(host_, port_);
-      auto res = stream_.request("/" + key);
+
+      std::string target = "/" + key;
+      auto res = stream_.request(http::verb::get, target);
 
       if (res.result() == http::status::not_found) {
         return nullptr;
@@ -160,7 +169,15 @@ class Cache::Impl {
 
 
     size_type space_used() const {
-      return 0;
+      httpstream stream_;
+      stream_.connect(host_, port_);
+
+      std::string target = "/k1";
+      auto res = stream_.request(http::verb::head, target);
+      auto memused = std::atoi(res["Space-Used"].data());
+
+      stream_.close();
+      return memused;
     };
 
 
@@ -203,11 +220,17 @@ int main(int argc, char const *argv[]) {
   Cache cache(LOCALHOST_ADDRESS, PORT);
 
   Cache::size_type size;
-  cache.get("k1", size);
-  std::cout << size << std::endl;   // should get k1
+  // cache.get("k1", size);
+  // std::cout << size << std::endl;   // should get k1
+  //
+  // cache.get("k3", size);
+  // std::cout << size << std::endl;   // should not get k1, size should not change
 
-  cache.get("k3", size);
-  std::cout << size << std::endl;   // should not get k1, size should not change
+  // cache.get("k1", size);  // shoudl get value="1"
+  // cache.set("k1", "0", size);
+  // cache.get("k1", size);  // should get value="0"
+
+  std::cout << cache.space_used() << std::endl;   // should return value of header field "Spaced-Used" in a HEAD request
 
   return 0;
 }
