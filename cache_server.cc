@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
   {
     set_header(req, res, cache);
     res.end();
-  
+
   });
 
 
@@ -104,8 +104,14 @@ int main(int argc, char *argv[])
         res.end();
       }
     } else {
-      cache.del(key);
-      res.end();
+      if (cache.del(key)) {
+        res.end();
+      }
+      else {
+        res.code = 404;
+        res.write("Key not found");
+        res.end();
+      }
     }
 
   });

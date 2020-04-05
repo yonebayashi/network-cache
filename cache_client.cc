@@ -164,6 +164,16 @@ class Cache::Impl {
 
 
     bool del(key_type key) {
+      httpstream stream_;
+      stream_.connect(host_, port_);
+
+      std::string target = "/" + key;
+      auto res = stream_.request(http::verb::delete_, target);
+
+      if (res.result() == http::status::not_found)
+          return false;
+
+      stream_.close();
       return true;
     };
 
@@ -239,9 +249,27 @@ int main(int argc, char const *argv[]) {
 
   // std::cout << cache.space_used() << std::endl;   // should return value of header field "Spaced-Used" in a HEAD request
 
+  // std::cout << cache.space_used() << std::endl;   // should return 4
+  // cache.reset();
+  // std::cout << cache.space_used() << std::endl;  // should return 0
+
+  cache.get("k1", size);
+  std::cout << size << std::endl;   // should return 2
   std::cout << cache.space_used() << std::endl;   // should return 4
-  cache.reset();
-  std::cout << cache.space_used() << std::endl;  // should return 0
+
+  if (cache.del("k1"))
+      std::cout << "Key successfully deleted" << std::endl;
+  else
+      std::cout << "Key cannot be deleted" << std::endl;    // should return true
+
+  cache.get("k1", size);
+  std::cout << size << std::endl;   // should return 0
+  std::cout << cache.space_used() << std::endl;  // should return 2
+
+  if (cache.del("k1"))
+      std::cout << "Key successfully deleted" << std::endl;
+  else
+      std::cout << "Key cannot be deleted" << std::endl;    // should return true
 
   return 0;
 }
