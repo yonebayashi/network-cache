@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
   CROW_ROUTE(app, "/<string>")
     .methods("HEAD"_method ,"GET"_method, "DELETE"_method, "POST"_method)
-  ([&cache, &size](const crow::request& req, crow::response& res, key_type key)
+  ([&cache, &size](const crow::request& req, crow::response& res, const key_type& key)
   {
     if ((key == "reset") && (req.method == "POST"_method)) {
       cache.reset();
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
   // PUT /k/v
   CROW_ROUTE(app, "/<string>/<string>")
     .methods("HEAD"_method, "PUT"_method)
-  ([&cache, &size](const crow::request& req, crow::response& res, key_type key, std::string value)
+  ([&cache, &size](const crow::request& req, crow::response& res, const key_type& key, const std::string& value)
   {
     if (req.method == "HEAD"_method) {
       set_header(req, res, cache);
