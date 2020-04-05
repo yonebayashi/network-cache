@@ -148,6 +148,8 @@ class Cache::Impl {
       std::cout << "Value: " << rvalue << std::endl;
 
       val_size = rvalue.size() + 1;
+
+      stream_.close();
       return nullptr;
     };
 
