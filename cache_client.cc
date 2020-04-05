@@ -172,7 +172,7 @@ class Cache::Impl {
       httpstream stream_;
       stream_.connect(host_, port_);
 
-      std::string target = "/k1";
+      std::string target = "/";   // could be anything
       auto res = stream_.request(http::verb::head, target);
       auto memused = std::atoi(res["Space-Used"].data());
 
@@ -182,7 +182,14 @@ class Cache::Impl {
 
 
     void reset() {
+      httpstream stream_;
+      stream_.connect(host_, port_);
 
+      std::string target = "/reset";
+      stream_.request(http::verb::post, target);
+
+      stream_.close();
+      return;
     };
 };
 
@@ -230,7 +237,11 @@ int main(int argc, char const *argv[]) {
   // cache.set("k1", "0", size);
   // cache.get("k1", size);  // should get value="0"
 
-  std::cout << cache.space_used() << std::endl;   // should return value of header field "Spaced-Used" in a HEAD request
+  // std::cout << cache.space_used() << std::endl;   // should return value of header field "Spaced-Used" in a HEAD request
+
+  std::cout << cache.space_used() << std::endl;   // should return 4
+  cache.reset();
+  std::cout << cache.space_used() << std::endl;  // should return 0
 
   return 0;
 }

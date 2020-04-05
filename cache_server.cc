@@ -59,13 +59,6 @@ int main(int argc, char *argv[])
       }
     }
 
-
-  SimpleApp app;
-  CROW_ROUTE(app, "/")([]{
-    return "Hello world\n";
-  });
-
-
   Cache cache(8, 0.75, nullptr);
   Cache::size_type size;
 
@@ -74,6 +67,17 @@ int main(int argc, char *argv[])
 
   cache.set("k1", val1, strlen(val1)+1);
   cache.set("k2", val2, strlen(val2)+1);
+
+
+  SimpleApp app;
+  CROW_ROUTE(app, "/")
+    .methods("HEAD"_method)
+  ([&cache](const crow::request& req, crow::response& res)
+  {
+    set_header(req, res, cache);
+    res.end();
+  
+  });
 
 
   CROW_ROUTE(app, "/<string>")
@@ -107,7 +111,6 @@ int main(int argc, char *argv[])
   });
 
 
-  // PUT /k/v
   CROW_ROUTE(app, "/<string>/<string>")
     .methods("HEAD"_method, "PUT"_method)
   ([&cache, &size](const crow::request& req, crow::response& res, const key_type& key, const std::string& value)
