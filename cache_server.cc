@@ -23,9 +23,42 @@ void set_header(const crow::request& req, crow::response& res, const Cache& cach
   res.end();
 }
 
+
 int main(int argc, char *argv[])
 {
-  // TODO: handle optional command line arguments
+  int opt;
+
+  Cache::size_type maxmem;
+  std::string host;
+  std::string port;
+  short threads;
+
+  while((opt = getopt(argc, argv, "m:s:p:t:")) != -1)
+  {
+      switch(opt)
+      {
+          case 'm':
+              if (optarg) maxmem = std::atoi(optarg);
+              std::cout << "Maxmem: " << maxmem << std::endl;
+              break;
+          case 's':
+              if (optarg) host = optarg;
+              std::cout << "Server host: " << host << std::endl;
+              break;
+          case 'p':
+              if (optarg) port = optarg;
+              std::cout << "Port: " << port << std::endl;
+              break;
+          case 't':
+              if (optarg) threads = std::atoi(optarg);
+              std::cout << "Thread count: " << threads << std::endl;
+              break;
+          default: /* '?' */
+              std::cout << "Usage: " << argv[0] << " [-m maxmem] [-s server] [-p port] [-t threads]\n";
+              exit(EXIT_FAILURE);
+      }
+    }
+
 
   SimpleApp app;
   CROW_ROUTE(app, "/")([]{
@@ -71,12 +104,12 @@ int main(int argc, char *argv[])
         res.end();
       } else {
         crow::json::wvalue x;
-        x[key] = value;
+        x["key"] = key;
+        x["value"] = value;
         res.write(crow::json::dump(x));
         res.end();
       }
     } else {
-      //req.method == "DELETE"_method
       cache.del(key);
       res.end();
     }
@@ -107,10 +140,10 @@ int main(int argc, char *argv[])
   asio::io_service is;
     {
         asio::ip::tcp::socket c(is);
-        c.connect(asio::ip::tcp::endpoint(asio::ip::address::from_string(LOCALHOST_ADDRESS), PORT));
 
         try
         {
+            c.connect(asio::ip::tcp::endpoint(asio::ip::address::from_string(LOCALHOST_ADDRESS), PORT));
         }
         catch(std::exception& e)
         {
