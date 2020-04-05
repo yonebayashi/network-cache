@@ -4,8 +4,8 @@
 #include "cache.hh"
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <stdlib.h>
-
 
 using namespace crow;
 
@@ -76,32 +76,63 @@ int main(int argc, char *argv[])
   cache.set("k2", val2, strlen(val2)+1);
 
 
+  CROW_ROUTE(app, "/reset")
+    .methods("HEAD"_method, "POST"_method)
+  ([&cache, &size](const crow::request& req, crow::response& res)
+  {
+    if (req.method == "HEAD"_method) {
+      set_header(req, res, cache);
+    }
+    cache.reset();
+    res.end();
+  });
+
+
   // GET /key
   // test with "curl -X GET http://localhost:8080/{key} --output -"
   CROW_ROUTE(app, "/<string>")
-    .methods("HEAD"_method ,"GET"_method)
+    .methods("HEAD"_method ,"GET"_method, "DELETE"_method)
   ([&cache, &size](const crow::request& req, crow::response& res, key_type key)
+  {
+    if (req.method == "HEAD"_method) {
+      set_header(req, res, cache);
+    } else if (req.method =="GET"_method) {
+      auto value = cache.get(key, size);
+      if (!value) {
+        res.code = 404;
+        res.write("Key not found");
+        res.end();
+      } else {
+        crow::json::wvalue x;
+        x["key"] = key;
+        x["value"] = value;
+        res.write(crow::json::dump(x));
+        res.end();
+      }
+    } else {
+      cache.del(key);
+      res.end();
+    }
+
+  });
+
+
+  // PUT /k/v
+  CROW_ROUTE(app, "/<string>/<string>")
+    .methods("HEAD"_method, "PUT"_method)
+  ([&cache, &size](const crow::request& req, crow::response& res, key_type key, std::string value)
   {
     if (req.method == "HEAD"_method) {
       set_header(req, res, cache);
     }
 
-    auto value = cache.get(key, size);
+    Cache::val_type pval = value.c_str();
+    size = value.size()+1;
+    cache.set(key, pval, size);
 
-    if (!value) {
-      res.code = 404;
-      res.write("Key not found");
-      res.end();
-    } else {
-      crow::json::wvalue x;
-      x["key"] = key;
-      x["value"] = value;
-      res.write(crow::json::dump(x));
-      res.end();
-    }
+    res.end();
+
   });
-
-  // PUT /k/v
 
 
   auto _ = async(std::launch::async, [&]{app.bindaddr(LOCALHOST_ADDRESS).port(PORT).run();});
