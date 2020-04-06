@@ -24,3 +24,4 @@ test: all
 
 valgrind: all
 	valgrind --leak-check=full --show-leak-kinds=all ./test_cache_client
+	valgrind --leak-check=full --show-leak-kinds=all ./cache_server
