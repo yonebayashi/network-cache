@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <cmath>
 #include <cstring>
+
 #include "cache.hh"
 
 namespace beast = boost::beast;     // from <boost/beast.hpp>
@@ -97,7 +98,7 @@ auto httpstream::request(const http::verb& method, const std::string& target)
 
       // Receive the HTTP response
       http::read(socket, this->buffer, res, ec);
-      if ( ec )
+      if ( ec ) {
           if ( ec == beast::http::error::end_of_stream ) {
               close();
               buffer.consume(buffer.size());
@@ -105,6 +106,7 @@ auto httpstream::request(const http::verb& method, const std::string& target)
           } else {
               throw beast::system_error{ec};
           };
+        }
 
   } while (ec);
 
@@ -131,6 +133,8 @@ class Cache::Impl {
 
       std::string target = "/" + key + "/" + val;
       auto res = stream_.request(http::verb::put, target);
+
+      boost::ignore_unused(size);
 
       stream_.close();
       return;

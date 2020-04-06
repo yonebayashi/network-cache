@@ -1,7 +1,7 @@
 #include "crow_all.h"
-#include "cache_lib.cc"
 #include "evictor.hh"
 #include "cache.hh"
+
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -149,6 +149,5 @@ int main(int argc, char *argv[])
         }
     }
 
-  // app.stop();
   return 0;
 }

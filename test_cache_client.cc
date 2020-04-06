@@ -12,9 +12,6 @@
 
 #include "evictor.hh"
 #include "cache.hh"
-#include "fifo_evictor.hh"
-
-#include "cache_client.cc"    // TODO: put this in Makefile
 
 
 #define LOCALHOST_ADDRESS "127.0.0.1"
