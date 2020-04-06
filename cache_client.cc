@@ -153,11 +153,9 @@ class Cache::Impl {
       auto j = json::parse(data);
 
       auto rkey = j["key"];
-      auto rvalue = j["value"];
-      std::cout << "Key: " << rkey << std::endl;
-      std::cout << "Value: " << rvalue << std::endl;
+      auto rvalue = j["value"].get<std::string>();
 
-      val_size = rvalue.size() + 1;
+      val_size = rvalue.length() + 1;
 
       stream_.close();
       return nullptr;
@@ -231,46 +229,4 @@ Cache::size_type Cache::space_used() const
 void Cache::reset()
 {
   return pImpl_->reset();
-}
-
-// TODO: main() to be omitted when test_cache_client is linked
-int main(int argc, char const *argv[]) {
-  Cache cache(LOCALHOST_ADDRESS, PORT);
-
-  Cache::size_type size;
-  // cache.get("k1", size);
-  // std::cout << size << std::endl;   // should get k1
-  //
-  // cache.get("k3", size);
-  // std::cout << size << std::endl;   // should not get k1, size should not change
-
-  // cache.get("k1", size);  // shoudl get value="1"
-  // cache.set("k1", "0", size);
-  // cache.get("k1", size);  // should get value="0"
-
-  // std::cout << cache.space_used() << std::endl;   // should return value of header field "Spaced-Used" in a HEAD request
-
-  // std::cout << cache.space_used() << std::endl;   // should return 4
-  // cache.reset();
-  // std::cout << cache.space_used() << std::endl;  // should return 0
-
-  cache.get("k1", size);
-  std::cout << size << std::endl;   // should return 2
-  std::cout << cache.space_used() << std::endl;   // should return 4
-
-  if (cache.del("k1"))
-      std::cout << "Key successfully deleted" << std::endl;
-  else
-      std::cout << "Key cannot be deleted" << std::endl;    // should return true
-
-  cache.get("k1", size);
-  std::cout << size << std::endl;   // should return 0
-  std::cout << cache.space_used() << std::endl;  // should return 2
-
-  if (cache.del("k1"))
-      std::cout << "Key successfully deleted" << std::endl;
-  else
-      std::cout << "Key cannot be deleted" << std::endl;    // should return true
-
-  return 0;
 }

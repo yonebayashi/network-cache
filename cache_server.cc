@@ -12,6 +12,7 @@ using namespace crow;
 #define LOCALHOST_ADDRESS "127.0.0.1"
 #define PORT 8080
 
+int MAXMEM = 8;
 
 void set_header(const crow::request& req, crow::response& res, const Cache& cache) {
   CROW_LOG_INFO << "Server received a HEAD request";
@@ -28,7 +29,7 @@ int main(int argc, char *argv[])
 {
   int opt;
 
-  Cache::size_type maxmem;
+  Cache::size_type maxmem = MAXMEM;
   std::string host;
   std::string port;
   short threads;
@@ -59,14 +60,8 @@ int main(int argc, char *argv[])
       }
     }
 
-  Cache cache(8, 0.75, nullptr);
+  Cache cache(maxmem, 0.75, nullptr);
   Cache::size_type size;
-
-  const Cache::val_type val1 = "1";
-  const Cache::val_type val2 = "2";
-
-  cache.set("k1", val1, strlen(val1)+1);
-  cache.set("k2", val2, strlen(val2)+1);
 
 
   SimpleApp app;
@@ -104,6 +99,7 @@ int main(int argc, char *argv[])
         res.end();
       }
     } else {
+      // DELETE request
       if (cache.del(key)) {
         res.end();
       }
@@ -125,10 +121,13 @@ int main(int argc, char *argv[])
       set_header(req, res, cache);
     }
 
-    Cache::val_type pval = value.c_str();
-    size = value.size()+1;
-    cache.set(key, pval, size);
+    // PUT request
+    size = value.length()+1;
+    Cache::byte_type* pval = new Cache::byte_type[size+1];
+    std::copy(value.begin(), value.end(), pval);
 
+    cache.set(key, pval, size);
+    delete[] pval;
     res.end();
 
   });
