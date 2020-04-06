@@ -1,18 +1,12 @@
-CXX=g++-8
+CXX=g++
 CXXFLAGS=-Wall -Wextra -pedantic -Werror -std=c++17 -O0 -g
 LDFLAGS=$(CXXFLAGS)
-LIBS=-pthread
+LIBS=-pthread -lboost_thread -lboost_system
 OBJ=$(SRC:.cc=.o)
 
-all:  cache_server test_cache_lib test_cache_client test_evictors
+all:  cache_server test_cache_client
 
 cache_server: cache_server.o cache_lib.o
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-test_evictors: test_evictors.o lru_evictor.o
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-test_cache_lib: test_cache_lib.o cache_lib.o
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 test_cache_client: test_cache_client.o cache_client.o
@@ -22,13 +16,12 @@ test_cache_client: test_cache_client.o cache_client.o
 	$(CXX) $(CXXFLAGS) $(OPTFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf *.o test_cache_client test_cache_lib test_evictors cache_server
+	rm -rf *.o test_cache_client cache_server
 
 test: all
-	./test_cache_lib
-	./test_evictors
+	./test_cache_client
 	echo "test_cache_client must be run manually against a running server"
 
 valgrind: all
-	valgrind --leak-check=full --show-leak-kinds=all ./test_cache_lib
-	valgrind --leak-check=full --show-leak-kinds=all ./test_evictors
+	valgrind --leak-check=full --show-leak-kinds=all ./test_cache_client
+	valgrind --leak-check=full --show-leak-kinds=all ./cache_server
