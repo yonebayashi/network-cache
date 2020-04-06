@@ -5,7 +5,7 @@
 
 ### Installation
 
-First, make sure you have all the dependencies needed to run this project. We use **Boost v1.69.0** [download [here](https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.gz)], **Crow** (a single header file `crow_all.h` has been included in this repository, which can also be downloaded [here](https://github.com/ipkn/crow/releases/download/v0.1/crow_all.h)).
+First, make sure you have all the dependencies needed to run this project. We use **Boost v1.69.0** [download [here](https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.gz)], **Crow** (a single header file `crow_all.h` has been included in this repository, which can also be downloaded [here](https://github.com/ipkn/crow/releases/download/v0.1/crow_all.h)), and **nlohmann/json** for reading JSON data (follow the download instructions [here](https://github.com/nlohmann/json)).   
 
 To install **Boost v1.69.0**, run the following commands
 
